@@ -11,6 +11,7 @@ module.exports = function (host, port) {
         client.connect(port, 'localhost', function () {
             var message = ClientMessage(client);
 
+            // TODO: param ONLY one Object???
             message.serverFunc1(1, 2, 'a', {b: 3}, function (err, data) {
                 console.log('Client receive: ' + data);
                 console.log(data);

@@ -14,6 +14,7 @@ module.exports = function (host, port) {
     var server = new net.createServer(function (socket) {
         var message = ServertMessage(socket);
 
+        // TODO: param ONLY one Object???
         message.clientFunc1(1, 2, 'a', {b: 3}, function (err, data) {
             console.log('Server receive: ' + data);
             console.log(data);
