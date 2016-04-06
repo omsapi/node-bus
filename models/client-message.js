@@ -1,20 +1,17 @@
-var Message = require('./message');
+var message = require('./message');
 
-module.exports = function(socket){
-    var message = new Message([
-        'serverFunc1'
-    ]);
+var schema = new message.Schema([
+    'getNodeList',
+    'hello'
+]);
 
-    message.methods.clientFunc1 = function (arg1, arg2, arg3, arg4, callback) {
-        console.log('Client: ' + arg1);
-        console.log('Client: ' + arg2);
-        console.log('Client: ' + arg3);
-        console.log('Client: ' + arg4);
+//schema.methods.clientFunc1 = function (arg1, arg2, arg3, arg4, callback) {
+//    console.log('Client: ' + arg1);
+//    console.log('Client: ' + arg2);
+//    console.log('Client: ' + arg3);
+//    console.log('Client: ' + arg4);
+//
+//    callback(null, 'hello from Client!', 'two argument');
+//};
 
-        callback(null, 'hello from Client!');
-    };
-
-    message.create(socket);
-
-    return message;
-};
+module.exports = message.create(schema);
