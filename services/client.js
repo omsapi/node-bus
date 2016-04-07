@@ -16,9 +16,8 @@ module.exports = function (host, port) {
         var message = new ClientMessage(client);
 
         message.getNodeList(function (err, nodes) {
-            //nodeList=nodes;
             //client.end();
-console.log(nodes);
+            console.log(nodes);
             nodeList = nodes.map(function (node) {
                 var deferred = Q.defer();
                 var socket = new net.Socket();
@@ -37,7 +36,7 @@ console.log(nodes);
                     host: node.host,
                     port: node.port,
                     message: deferred.promise,
-                }
+                };
             });
 
             nodeList[0].message.then(function (message) {
