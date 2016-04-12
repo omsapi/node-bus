@@ -6,14 +6,45 @@ require('./services/client')('localhost', seedPort);
 require('./services/client')('localhost', seedPort);
 
 var tokenGenerator = require('./lib/token-generator');
+var VnodeService = require('./lib/vnode-service');
+var vnodeService = new VnodeService();
+var async = require('async');
 
-tokenGenerator.create(10, function (err, tokens) {
-    if (err) {
-        return console.log(err);
+async.parallel([
+    function (callback) {
+        tokenGenerator.create(10, function (err, tokens) {
+            callback(err, tokens);
+        });
+    },
+    function (callback) {
+        tokenGenerator.create(10, function (err, tokens) {
+            callback(err, tokens);
+        });
+    },
+    function (callback) {
+        tokenGenerator.create(10, function (err, tokens) {
+            callback(err, tokens);
+        });
     }
+], function (err, results) {
+    results.forEach(function (tokens, i) {
+        vnodeService.add({host: 'node' + i, port: 9000, tokens: tokens});
+    });
 
-    console.log(tokens);
+    tokenGenerator.get('topic1.ch1', function (err, hash) {
+        if (err) {
+            return console.log(err);
+        }
+
+        console.log('Hash: ' + hash);
+        var vnode = vnodeService.get(hash);
+        console.log(vnode);
+    });
 });
+
+
+
+
 
 
 
