@@ -31,23 +31,19 @@ async.parallel([
         vnodeService.add({host: 'node' + i, port: 9000, tokens: tokens});
     });
 
+
     tokenGenerator.get('topic1.ch3', function (err, hash) {
         if (err) {
             return console.log(err);
         }
 
+        //hash=4294967295;
+        //hash=4294967290;
         console.log('Hash: ' + hash);
         var vnode = vnodeService.get(hash);
         console.log(vnode);
-    });
 
-    tokenGenerator.get('topic1.ch3', function (err, hash) {
-        if (err) {
-            return console.log(err);
-        }
-
-        console.log('Hash: ' + hash);
-        var vnode = vnodeService.getFast(hash);
+        vnode = vnodeService.getFast(hash);
         console.log(vnode);
     });
 });
