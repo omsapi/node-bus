@@ -11,6 +11,9 @@ module.exports = function (host, port) {
         port: port
     }];
 
+    var topics = {};
+    var clients = {};
+
     var server = new net.createServer(function (socket) {
         //var message = new Message(socket);
         //message.listen('myFunc1', function (remoteArg, callback) {
@@ -38,11 +41,45 @@ module.exports = function (host, port) {
             callback(null, 'Hello ' + name + '!');
         });
 
-        //message.clientFunc1(1, 2, 'a', {b: 3}, function (err, data, arg2) {
-        //    console.log('Server receive: ' + data);
-        //    console.log(data);
-        //    console.log('Arg2: ' + arg2);
-        //});
+        message.listen('send-data', function (topicName, data, callback) {
+            console.log('Received: ' + topicName);
+            console.log(data);
+
+            var topic = topics[topicName] = topics[topicName] || [];
+            var message = {
+                data: data,
+                created: moment.utc(),
+                lastUpdate: moment.utc()
+            };
+
+            topic.push(message);
+
+            callback(null);
+        });
+
+        message.listen('get-data', function (clientId, topicName, channelName, callback) {
+            //var clientName = topicName + '.' + channelName;
+            console.log('Received clientID: ' + clientId);
+            var client = clients[clientId] = clients[clientId] || {};
+            client.topicName = topicName;
+            client.channelName = channelName;
+            client.callback = callback;
+
+            var topic = topics[topicName];
+            var msg = topic.pop();
+
+            callback(null, msg);
+        });
+
+        message.listen('ack', function (clientId) {
+            console.log('Received ack: ' + clientId);
+            var client = clients[clientId];
+            var topicName = client.topicName;
+            var topic = topics[topicName];
+
+            var msg = topic.pop();
+            client.callback(null, msg);
+        });
     });
 
     server.listen(port, 'localhost', function () {
