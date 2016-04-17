@@ -57,7 +57,7 @@ module.exports = function (host, port) {
             callback(null);
         });
 
-        message.listen('get-data', function (clientId, topicName, channelName, callback) {
+        message.listen('create-channel', function (clientId, topicName, channelName, callback) {
             //var clientName = topicName + '.' + channelName;
             console.log('Received clientID: ' + clientId);
             var client = clients[clientId] = clients[clientId] || {};
@@ -65,10 +65,29 @@ module.exports = function (host, port) {
             client.channelName = channelName;
             client.callback = callback;
 
-            var topic = topics[topicName];
-            var msg = topic.pop();
 
-            callback(null, msg);
+            function sendNewMessage(){
+                var topic = topics[topicName];
+                var msg = topic.pop();
+
+                if(!msg){
+                    return process.nextTick(function(){
+                        sendNewMessage();
+                    });
+                }
+
+                message.send('new-message', msg, function(err){
+                    if (err) {
+                        callback(err);
+                    }
+
+                    sendNewMessage();
+                });
+            }
+
+            sendNewMessage();
+
+            callback();
         });
 
         message.listen('ack', function (clientId) {
@@ -77,9 +96,14 @@ module.exports = function (host, port) {
             var topicName = client.topicName;
             var topic = topics[topicName];
 
+            console.log(topics);
+            console.log(topic);
             var msg = topic.pop();
+            console.log(msg);
             client.callback(null, msg);
         });
+
+        message.listen('create-c')
     });
 
     server.listen(port, 'localhost', function () {
