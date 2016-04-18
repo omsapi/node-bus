@@ -1,8 +1,10 @@
 var net = require('net');
 var moment = require('moment');
+var Q = require('q');
 
 //var ServertMessage = require('../models/server-message');
 var Message = require('../models/message2');
+var Topic = require('../lib/topic');
 
 module.exports = function (host, port) {
     var nodeList = [{
@@ -45,49 +47,42 @@ module.exports = function (host, port) {
             console.log('Received: ' + topicName);
             console.log(data);
 
-            var topic = topics[topicName] = topics[topicName] || [];
+            var topic = topics[topicName] = topics[topicName] || new Topic();
             var message = {
                 data: data,
                 created: moment.utc(),
                 lastUpdate: moment.utc()
             };
 
-            topic.push(message);
+            topic.add(message);
 
             callback(null);
         });
 
         message.listen('create-channel', function (clientId, topicName, channelName, callback) {
-            //var clientName = topicName + '.' + channelName;
-            console.log('Received clientID: ' + clientId);
+            console.log('Create channel. Received clientID: ' + clientId);
+
             var client = clients[clientId] = clients[clientId] || {};
             client.topicName = topicName;
             client.channelName = channelName;
-            client.callback = callback;
-
-
-            function sendNewMessage(){
-                var topic = topics[topicName];
-                var msg = topic.pop();
-
-                if(!msg){
-                    return process.nextTick(function(){
-                        sendNewMessage();
-                    });
-                }
-
-                message.send('new-message', msg, function(err){
-                    if (err) {
-                        callback(err);
-                    }
-
-                    sendNewMessage();
-                });
-            }
-
-            sendNewMessage();
 
             callback();
+        });
+
+        message.listen('get-message', function (clientId, topicName, channelName, callback) {
+            console.log('Get message. Received clientID: ' + clientId);
+
+            var client = clients[clientId];
+            var topic = topics[topicName];
+
+            console.log(topic._messages.length);
+            console.log(topic._deferreds.length);
+            console.log('+++++++++++++++++++++++++++');
+            topic.next(clientId, function (err, msg) {
+                console.log(topic._messages.length);
+                console.log(topic._deferreds.length);
+                callback(null, msg);
+            });
         });
 
         message.listen('ack', function (clientId) {
