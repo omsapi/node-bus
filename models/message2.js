@@ -1,9 +1,25 @@
+var util = require('util');
+var EventEmitter = require('events').EventEmitter;
 var shortid = require('shortid');
+
 var Protocol = require('../lib/socket-protocol');
 
 function Message(socket) {
+    EventEmitter.call(this);
+
+    var self = this;
     this._protocol = new Protocol(socket);
+
+    this._errorHandler = function () {
+    };
+
+    this._protocol.on('error', function (err) {
+        console.log('+++SocketProtocol on error+++');
+        self._errorHandler(err);
+    });
 }
+
+util.inherits(Message, EventEmitter);
 
 Message.prototype.send = function (methodName) {
     var self = this;
@@ -28,6 +44,9 @@ Message.prototype.listen = function (methodName) {
 
     self._protocol.on(methodName, function (msg) {
         var callback = function () {
+            //var resultCallbackPos = arguments.length - 1;
+            //var resultCallback = arguments[resultCallbackPos] || function () {};
+
             var args = [].slice.call(arguments, 1);
             var err = arguments[0];
 
@@ -38,12 +57,18 @@ Message.prototype.listen = function (methodName) {
             };
 
             self._protocol.send(Protocol.RESPONSE, methodName, respMsg);
+            //resultCallback();
         };
 
         var args = msg.data.concat(callback);
 
         params.callback.apply(this, args);
     });
+};
+
+// TODO: addErrorHandler - collection ???
+Message.prototype.setErrorHandler = function (handler) {
+    this._errorHandler = handler;
 };
 
 function getSendParams(args) {
