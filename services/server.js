@@ -5,6 +5,8 @@ var Q = require('q');
 //var ServertMessage = require('../models/server-message');
 var Message = require('../models/message2');
 var Topic = require('../lib/topic');
+var Remote = require('../lib/remote');
+var ConsumerService = require('../lib/consumer-service');
 
 module.exports = function (host, port) {
     var nodeList = [{
@@ -14,7 +16,8 @@ module.exports = function (host, port) {
     }];
 
     var topics = {};
-    var clients = {};
+    var remotes = {};
+    var consumerService = new ConsumerService(topics, remotes);
 
     var server = new net.createServer(function (socket) {
         //var message = new Message(socket);
@@ -62,9 +65,10 @@ module.exports = function (host, port) {
         message.listen('create-channel', function (clientId, topicName, channelName, callback) {
             console.log('Create channel. Received clientID: ' + clientId);
 
-            var client = clients[clientId] = clients[clientId] || {};
-            client.topicName = topicName;
-            client.channelName = channelName;
+            remotes[topicName] = remotes[topicName] || new Remote();
+            //client.topicName = topicName;
+            //client.channelName = channelName;
+
 
             callback();
         });
@@ -72,22 +76,18 @@ module.exports = function (host, port) {
         message.listen('get-message', function (clientId, topicName, channelName, callback) {
             console.log('Get message. Received clientID: ' + clientId);
 
-            var client = clients[clientId];
-            var topic = topics[topicName];
+            var remote = remotes[topicName];
 
-            console.log(topic._messages.length);
-            console.log(topic._deferreds.length);
-            console.log('+++++++++++++++++++++++++++');
-            topic.next(clientId, function (err, msg) {
-                console.log(topic._messages.length);
-                console.log(topic._deferreds.length);
-                callback(null, msg);
-            });
+            remote.add(clientId, callback);
+
+            //topic.next(clientId, function (err, msg) {
+            //    callback(null, msg);
+            //});
         });
 
         message.listen('ack', function (clientId) {
             console.log('Received ack: ' + clientId);
-            var client = clients[clientId];
+            var client = remoutes[clientId];
             var topicName = client.topicName;
             var topic = topics[topicName];
 
@@ -98,7 +98,9 @@ module.exports = function (host, port) {
             client.callback(null, msg);
         });
 
-        message.listen('create-c')
+        message.on('error', function (err) {
+
+        });
     });
 
     server.listen(port, 'localhost', function () {
