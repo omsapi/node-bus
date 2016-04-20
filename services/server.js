@@ -21,47 +21,39 @@ module.exports = function (host, port) {
 
         //#######################################
 
-        message.listen('getNodeList', function (callback) {
-            callback(null, nodeList);
+        message.listen('getNodeList', function (res) {
+            res.send(null, nodeList);
         });
 
-        message.listen('hello', function (name, callback) {
-            callback(null, 'Hello ' + name + '!');
+        message.listen('hello', function (name, res) {
+            res.send(null, 'Hello ' + name + '!');
         });
 
         //#######################################
 
-        message.listen('send-data', function (topicName, data, callback) {
+        message.listen('send-data', function (topicName, data, res) {
             console.log('Received: ' + topicName);
             console.log(data);
 
             topicService.add(topicName, data);
 
-            callback(null);
+            res.send(null);
         });
 
-        message.listen('create-channel', function (clientId, topicName, channelName, callback) {
+        message.listen('create-channel', function (clientId, topicName, channelName, res) {
             console.log('Create channel. Received clientID: ' + clientId);
 
-            callback();
+            res.send();
         });
 
-        message.listen('get-message', function (clientId, topicName, channelName, callback) {
+        message.listen('get-message', function (clientId, topicName, channelName, res) {
             console.log('Get message. Received clientID: ' + clientId);
-            curClientId=clientId;
+            curClientId = clientId;
 
-            var remote = new Remote(topicName, channelName, callback);
-            message.setErrorHandler(remote.sendError.bind(remote));
+
+            var remote = new Remote(topicName, channelName, res);
 
             topicService.addRemote(remote);
-            //callback({data: 'hello'});
-
-            //message.on('error', function (err) {
-            //    console.log('!!!!ERROR!!!! '+curClientId);
-            //    console.log(err);
-            //    console.log('!!!!ERROR!!!! '+curClientId);
-            //    remote.sendError(err);
-            //});
         });
     });
 

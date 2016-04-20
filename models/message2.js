@@ -11,10 +11,10 @@ function Message(socket) {
     this._protocol = new Protocol(socket);
 
     this._errorHandler = function () {
+        // nop
     };
 
     this._protocol.on('error', function (err) {
-        console.log('+++SocketProtocol on error+++');
         self._errorHandler(err);
     });
 }
@@ -43,31 +43,46 @@ Message.prototype.listen = function (methodName) {
     var params = getListenParams(arguments);
 
     self._protocol.on(methodName, function (msg) {
-        var callback = function () {
-            //var resultCallbackPos = arguments.length - 1;
-            //var resultCallback = arguments[resultCallbackPos] || function () {};
 
-            var args = [].slice.call(arguments, 1);
-            var err = arguments[0];
-
-            var respMsg = {
-                id: msg.id,
-                data: args,
-                err: err
+        var res = (function () {
+            var errCallback = function () {
+                // nop
             };
 
-            self._protocol.send(Protocol.RESPONSE, methodName, respMsg);
-            //resultCallback();
-        };
+            var error = function (err) {
+                errCallback(err);
+            };
 
-        var args = msg.data.concat(callback);
+            self._protocol.on('error', error);
+
+            return {
+                send: function () {
+                    var args = [].slice.call(arguments, 1);
+                    var err = arguments[0];
+
+                    var respMsg = {
+                        id: msg.id,
+                        data: args,
+                        err: err
+                    };
+
+                    self._protocol.send(Protocol.RESPONSE, methodName, respMsg, function(){
+                        self._protocol.removeListener('error', error);
+                    });
+                },
+                onError: function (errFn) {
+                    errCallback = errFn;
+                }
+            };
+        })();
+
+        var args = msg.data.concat(res);
 
         params.callback.apply(this, args);
     });
 };
 
-// TODO: addErrorHandler - collection ???
-Message.prototype.setErrorHandler = function (handler) {
+Message.prototype.onError = function (handler) {
     this._errorHandler = handler;
 };
 
