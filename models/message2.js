@@ -8,6 +8,8 @@ function Message(socket) {
     EventEmitter.call(this);
 
     var self = this;
+
+    this._sendCallbacks = {};
     this._protocol = new Protocol(socket);
 
     this._errorHandler = function () {
@@ -16,6 +18,16 @@ function Message(socket) {
 
     this._protocol.on('error', function (err) {
         self._errorHandler(err);
+    });
+
+    self._protocol.on(Protocol.RESPONSE, function (msg) {
+        var args = [msg.err].concat(msg.data);
+        var callback = self._sendCallbacks[msg.id];
+
+        if(callback){
+            delete self._sendCallbacks[msg.id];
+            callback.apply(this, args);
+        }
     });
 }
 
@@ -30,10 +42,7 @@ Message.prototype.send = function (methodName) {
         data: params.args
     };
 
-    self._protocol.once(Protocol.RESPONSE, function (msg) {
-        var args = [msg.err].concat(msg.data);
-        params.callback.apply(this, args);
-    });
+    self._sendCallbacks[id] = params.callback;
 
     self._protocol.send(Protocol.REQUEST, methodName, msg);
 };
@@ -66,7 +75,7 @@ Message.prototype.listen = function (methodName) {
                         err: err
                     };
 
-                    self._protocol.send(Protocol.RESPONSE, methodName, respMsg, function(){
+                    self._protocol.send(Protocol.RESPONSE, methodName, respMsg, function () {
                         self._protocol.removeListener('error', error);
                     });
                 },

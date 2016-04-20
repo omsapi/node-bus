@@ -55,6 +55,17 @@ module.exports = function (host, port) {
 
             topicService.addRemote(remote);
         });
+
+        message.listen('finish-message', function (clientId, topicName, channelName, msgId, res) {
+            console.log('Finish message: ' + msgId);
+            res.send(null);
+
+            //topicService.finishMsg(topicName, msgId, function(err){
+            //    console.log('Send FINISH ' +msgId);
+            //    res.send(err, 'Hello! ' +msgId);
+            //});
+
+        });
     });
 
     server.listen(port, 'localhost', function () {
