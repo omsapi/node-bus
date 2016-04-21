@@ -57,14 +57,13 @@ module.exports = function (host, port) {
         });
 
         message.listen('finish-message', function (clientId, topicName, channelName, msgId, res) {
-            console.log('Finish message: ' + msgId);
-            res.send(null);
+            //console.log('Finish message: ' + msgId);
+            //res.send(null);
 
-            //topicService.finishMsg(topicName, msgId, function(err){
-            //    console.log('Send FINISH ' +msgId);
-            //    res.send(err, 'Hello! ' +msgId);
-            //});
-
+            topicService.finishMsg(topicName, msgId, function(err){
+                console.log('Send FINISH ' +msgId);
+                res.send(err, 'Hello! ' +msgId);
+            });
         });
     });
 
