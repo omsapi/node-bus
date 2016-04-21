@@ -54,12 +54,13 @@ Message.prototype.listen = function (methodName) {
     self._protocol.on(methodName, function (msg) {
 
         var res = (function () {
-            var errCallback = function () {
+            var resultCallback = function () {
                 // nop
             };
 
             var error = function (err) {
-                errCallback(err);
+                console.log('Result ERROR!');
+                resultCallback(err);
             };
 
             self._protocol.on('error', error);
@@ -77,10 +78,12 @@ Message.prototype.listen = function (methodName) {
 
                     self._protocol.send(Protocol.RESPONSE, methodName, respMsg, function () {
                         self._protocol.removeListener('error', error);
+                        console.log('Result OK!');
+                        resultCallback(null);
                     });
                 },
-                onError: function (errFn) {
-                    errCallback = errFn;
+                onResult: function (resultCb) {
+                    resultCallback = resultCb;
                 }
             };
         })();
