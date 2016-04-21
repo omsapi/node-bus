@@ -54,12 +54,12 @@ Message.prototype.listen = function (methodName) {
     self._protocol.on(methodName, function (msg) {
 
         var res = (function () {
-            var resultCallback = function () {
-                // nop
+            var hasError=false;
+            var resultCallback = function (err) {
+                hasError=err;
             };
 
             var error = function (err) {
-                console.log('Result ERROR!');
                 resultCallback(err);
             };
 
@@ -67,6 +67,10 @@ Message.prototype.listen = function (methodName) {
 
             return {
                 send: function () {
+                    if(hasError){
+                        return resultCallback(hasError);
+                    }
+
                     var args = [].slice.call(arguments, 1);
                     var err = arguments[0];
 
@@ -78,7 +82,6 @@ Message.prototype.listen = function (methodName) {
 
                     self._protocol.send(Protocol.RESPONSE, methodName, respMsg, function () {
                         self._protocol.removeListener('error', error);
-                        console.log('Result OK!');
                         resultCallback(null);
                     });
                 },

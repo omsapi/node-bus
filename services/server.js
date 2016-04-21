@@ -50,10 +50,7 @@ module.exports = function (host, port) {
             console.log('Get message. Received clientID: ' + clientId);
             curClientId = clientId;
 
-
-            var remote = new Remote(topicName, channelName, res);
-
-            topicService.addRemote(remote);
+            topicService.addRemote(topicName, res);
         });
 
         message.listen('finish-message', function (clientId, topicName, channelName, msgId, res) {
